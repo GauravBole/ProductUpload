@@ -54,16 +54,28 @@ def products_upload(self, file_path):
                             })
     final_dup = [duplicate_values.to_dict('records')[i * intervals:(i + 1) * intervals] for i in
             range((len(duplicate_values) + intervals - 1) // intervals)]
-    for ind, i in final_dup:
+    
+    for ind, i in enumerate(final_dup):
         current_task.update_state(state="PROGRESS_STATE",
                                 meta={
                                     "message": "pass {0} - 500 old products updating".format(
                                         {ind})
                                 })
+        existing_products_set = {}
+        all_sku = [j['sku'] for j in i]
+        all_products = Product.objects.filter(sku__in=all_sku)
+        for prod in all_products:
+            existing_products_set[prod.sku] = prod
+        
         update_obj = []
         for u in i:
-            update_obj.append(Product(**u))
-        Product.objects.bulk_update(update_obj, ['sku', 'name'])
+            if u['sku'] in existing_products_set:
+                product_obj = existing_products_set[u['sku']]
+                product_obj.name = u['name']
+                product_obj.discription = u['description']
+                update_obj.append(product_obj)
+    
+        Product.objects.bulk_update(update_obj, ['sku', 'name', 'description'])
         current_task.update_state(state="PROGRESS_STATE",
                                 meta={
                                     "message": "pass {0} - 500 old products compleated".format(
