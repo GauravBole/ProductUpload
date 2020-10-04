@@ -62,7 +62,6 @@ def products_upload(self, file_path):
                                 })
         update_obj = []
         for u in i:
-            print(i)
             update_obj.append(Product(**u))
         Product.objects.bulk_update(update_obj, ['sku', 'name'])
         current_task.update_state(state="PROGRESS_STATE",
