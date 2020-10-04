@@ -1,0 +1,116 @@
+{% extends 'index.html' %}
+{% block body %}
+<div class="row">
+  <div class="col-md-4">
+    <input type="file" id="id_user_file_upload" class="form-control" name="user_file_upload">
+  </div>
+    <div class="col-md-4">
+      <button onclick="uploadFile()" class="form-control">Submit</button>
+    </div>
+    <div id="result">
+    </div>
+  </div>
+   <table
+    id="task_list"
+    class="border stripe row-border cell-border hover"
+    style="width: 100%"
+  >
+    <thead>
+      <tr>
+        <th>Product Name</th>
+        <th>SKU</th>
+        <th>Discription</th>
+        
+      </tr>
+    </thead>
+  </table>
+  {% endblock %}
+
+  {% block script %}
+<script type="application/javascript">
+
+
+
+
+$('#task_list').DataTable({
+                pageLength: 12,
+            serverSide: true,
+            
+                ajax: {
+                    processing: true,
+                    serverSide: true,
+                    start: 0,
+                    length: 12,
+                    url: "/products/",
+                    
+                    dataSrc: function (results) {
+                        let all_products = [];
+                        results.all_data.forEach(result => {
+                            
+                            all_products.push(result);
+                        })
+                        return all_products;
+                    },
+                },
+
+                columns: [
+                    {data: "name"},
+                    {data: "sku"},
+                    {data: "description"}
+                ],
+            
+            })
+
+
+
+
+let task_id = localStorage.getItem('task_id')
+console.log(task_id, "--------")
+if(task_id !== 'null' && task_id){
+var source=new EventSource("/eventsource/"+task_id);
+    source.onmessage=function(event)
+    {
+        //document.getElementById("result").innerHTML+=event.data + "<br />";
+        document.getElementById("result").innerHTML = ""
+        document.getElementById("result").innerHTML = event.data
+    };
+}
+    const getCookie = (cname) => {
+      let name = cname + "=";
+        let ca = document.cookie.split(";");
+        for (let i = 0; i < ca.length;) {
+            let c = ca[i];
+            while (c.charAt(0) == " ") {
+      c = c.substring(1);
+            }
+            if (c.indexOf(name) == 0) {
+            return c.substring(name.length, c.length);
+            }
+        }
+        return;
+        }
+function uploadFile(){
+      let formData = new FormData()
+      let user_file = $('#id_user_file_upload').val()
+      formData.append('user_file_upload', $('#id_user_file_upload')[0].files[0])
+      $.ajax({
+        method: 'POST',
+        url: `/upload_file/`,
+        data: formData,
+
+        contentType: false,
+        processData: false,
+        headers: {
+          "X-CSRFToken": getCookie("csrftoken")
+        },
+        success: function (data) {
+          console.log(data)
+          if(data['message'] === "success"){
+            localStorage.setItem("task_id", data['task_id'])
+          }
+          console.log(localStorage.getItem("task_id"))
+        }
+      })
+    }
+  </script>
+  {% endblock %}

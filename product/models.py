@@ -6,7 +6,7 @@ class Product(models.Model):
 
     name = models.CharField(max_length=100, null=False, blank=False)
     sku = models.CharField(max_length=100,unique=True, null=False, blank=False)
-    discription = models.TextField()
+    description = models.TextField()
 
     class Meta:
         verbose_name = "Product"
